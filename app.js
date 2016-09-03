@@ -1,46 +1,14 @@
-var builder = require('botbuilder');
+// Load the http module to create an http server.
+var http = require('http');
 
-var connector = new builder.ConsoleConnector().listen();
+// Configure our HTTP server to respond with Hello World to all requests.
+var server = http.createServer(function (request, response) {
+  response.writeHead(200, {"Content-Type": "text/plain"});
+  response.end("Hello World\n");
+});
 
-var bot = new  builder.UniversalBot(connector);
-var intents = new builder.IntentDialog();
-bot.dialog('/', intents);
+// Listen on port 8000, IP defaults to 127.0.0.1
+server.listen(8000);
 
-
-intents.matches(/^\s*change\s*name\s*/i,[
-  	function(session){
-		session.beginDialog('/profile');
-	},
-	function(session,results){
-		session.send('Ok....Change your name to %s',session.userData.name);
-	}
-
-
-]);
-
-intents.onDefault([
-function(session,args,next){
-	if(!session.userData.name){
-      		session.beginDialog('/profile');
-	}
-	else{
-		next();
-	}
-},
-function(session,result){
-   session.send("Hello %s", session.userData.name);
-}
-
-
-]);
-
-bot.dialog('/profile',[function(session){
-	builder.Prompts.text(session,'Hi! What is your name?');
-},
-function(session , results){
-   session.userData.name = results.response;
-   session.endDialog();
-}
-]);
-
-
+// Put a friendly message on the terminal
+console.log("Server running at http://127.0.0.1:8000/");
