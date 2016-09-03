@@ -1,16 +1,68 @@
-// Load the http module to create an http server.
-var http = require('http');
+var builder = require('botbuilder');
 
-// Configure our HTTP server to respond with Hello World to all requests.
-var server = http.createServer(function (request, response) {
-  response.writeHead(200, {"Content-Type": "text/plain"});
-  response.end("Hello World\n");
+
+var restify = require('restify');
+
+//=========================================================
+// Bot Setup
+//=========================================================
+
+// Setup Restify Server
+var server = restify.createServer();
+server.listen(process.env.port || process.env.PORT || 3978, function () {
+   console.log('%s listening to %s', server.name, server.url); 
 });
+  
+// Create chat bot
+var connector = new builder.ChatConnector({
+    appId: '35b8673a-31f6-4225-8051-cc689e2e5b1c',
+    appPassword: 'sog1nbscmCy14ahCNrfjuL1'
+});
+var bot = new builder.UniversalBot(connector);
+server.post('/api/messages', connector.listen());
 
 
-var port = process.env.PORT || 8080;
-// Listen on port 8000, IP defaults to 127.0.0.1
-server.listen(port);
+var connector = new builder.ConsoleConnector().listen();
 
-// Put a friendly message on the terminal
-console.log("Server running at http://127.0.0.1:8000/");
+var bot = new  builder.UniversalBot(connector);
+var intents = new builder.IntentDialog();
+bot.dialog('/', intents);
+
+
+intents.matches(/^\s*change\s*name\s*/i,[
+  	function(session){
+		session.beginDialog('/profile');
+	},
+	function(session,results){
+		session.send('Ok....Change your name to %s',session.userData.name);
+	}
+
+
+]);
+
+intents.onDefault([
+function(session,args,next){
+	if(!session.userData.name){
+      		session.beginDialog('/profile');
+	}
+	else{
+		next();
+	}
+},
+function(session,result){
+   session.send("Hello %s", session.userData.name);
+}
+
+
+]);
+
+bot.dialog('/profile',[function(session){
+	builder.Prompts.text(session,'Hi! What is your name?');
+},
+function(session , results){
+   session.userData.name = results.response;
+   session.endDialog();
+}
+]);
+
+
