@@ -1,68 +1,25 @@
-var builder = require('botbuilder');
+var http = require('http');
 
+//The url we want is: 'www.random.org/integers/?num=1&min=1&max=10&col=1&base=10&format=plain&rnd=new'
+var options = {
+  host: 'tmweb.pacebus.com',
+        path: '/TMWebWatch/LiveADAArrivalTimes?r=44&d=1&s=7871'
+};
 
-var restify = require('restify');
+callback = function(response) {
+  var str = '';
 
-//=========================================================
-// Bot Setup
-//=========================================================
+  //another chunk of data has been recieved, so append it to `str`
+  response.on('data', function (chunk) {
+    str += chunk;
+  });
 
-// Setup Restify Server
-var server = restify.createServer();
-server.listen(process.env.port || process.env.PORT || 3978, function () {
-   console.log('%s listening to %s', server.name, server.url); 
-});
-  
-// Create chat bot
-var connector = new builder.ChatConnector({
-    appId: '35b8673a-31f6-4225-8051-cc689e2e5b1c',
-    appPassword: 'sog1nbscmCy14ahCNrfjuL1'
-});
-var bot = new builder.UniversalBot(connector);
-server.post('/api/messages', connector.listen());
-
-
-var connector = new builder.ConsoleConnector().listen();
-
-var bot = new  builder.UniversalBot(connector);
-var intents = new builder.IntentDialog();
-bot.dialog('/', intents);
-
-
-intents.matches(/^\s*change\s*name\s*/i,[
-  	function(session){
-		session.beginDialog('/profile');
-	},
-	function(session,results){
-		session.send('Ok....Change your name to %s',session.userData.name);
-	}
-
-
-]);
-
-intents.onDefault([
-function(session,args,next){
-	if(!session.userData.name){
-      		session.beginDialog('/profile');
-	}
-	else{
-		next();
-	}
-},
-function(session,result){
-   session.send("Hello %s", session.userData.name);
+  //the whole response has been recieved, so we just print it out here
+  response.on('end', function () {
+    var matchExpression = new RegExp(/<a class="adatime" title="\d+:\d+">(\d+:\d+)/m);
+    var matchComponents = matchExpression.exec(str);
+    console.log(matchComponents[1]);
+  });
 }
 
-
-]);
-
-bot.dialog('/profile',[function(session){
-	builder.Prompts.text(session,'Hi! What is your name?');
-},
-function(session , results){
-   session.userData.name = results.response;
-   session.endDialog();
-}
-]);
-
-
+http.request(options, callback).end();
