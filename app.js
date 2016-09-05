@@ -18,7 +18,7 @@ callback = function(response) {
   response.on('end', function () {
     var matchExpression = new RegExp(/<a class="adatime" title="\d+:\d+">(\d+:\d+)/m);
     var matchComponents = matchExpression.exec(str);
-    console.log(matchComponents[1]);
+    response.write(matchComponents[1]);
   });
 }
 
